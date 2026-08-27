@@ -6,6 +6,9 @@ historical OHLCV candle data.
 
 from __future__ import annotations
 
+# Patch logzero for Python 3.11+ compatibility (must run before SmartApi import)
+import src._logzero_compat  # noqa: F401
+
 from datetime import datetime, timedelta
 from typing import Any
 
