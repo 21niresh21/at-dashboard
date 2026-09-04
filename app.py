@@ -25,6 +25,7 @@ setup_logging()
 # ── Imports (after bootstrap) ─────────────────────────────────────────────────
 from pages.confluence import render as render_confluence  # noqa: E402
 from pages.home import render as render_home  # noqa: E402
+from pages.scalper import render as render_scalper  # noqa: E402
 from pages.screener import render as render_screener  # noqa: E402
 from pages.signals import render as render_signals  # noqa: E402
 
@@ -36,6 +37,7 @@ _PAGES: dict[str, tuple[str, object]] = {
     "Screener": ("", render_screener),
     "Signals": ("", render_signals),
     "Confluence": ("🎯", render_confluence),
+    "Scalper": ("⚡", render_scalper),
 }
 
 

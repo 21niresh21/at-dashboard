@@ -185,3 +185,97 @@ def detect_volume_surge(
     surge[volume_ratio > threshold] = 1.0
 
     return surge
+
+
+def compute_atr(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Compute Average True Range (ATR).
+
+    True Range is the greatest of:
+      - Current high minus current low
+      - |Current high minus previous close|
+      - |Current low  minus previous close|
+
+    ATR is the EMA-smoothed True Range (Wilder smoothing).
+
+    Args:
+        high: High price series.
+        low: Low price series.
+        close: Closing price series.
+        period: ATR lookback period (default 14).
+
+    Returns:
+        A pandas Series of ATR values.
+    """
+    prev_close = close.shift(1)
+
+    tr1 = high - low
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    # Wilder smoothing: alpha = 1 / period
+    atr = true_range.ewm(alpha=1 / period, min_periods=period).mean()
+    return atr
+
+
+def compute_vwap(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    volume: pd.Series,
+) -> pd.Series:
+    """Compute Volume Weighted Average Price (VWAP).
+
+    VWAP = cumulative(typical_price * volume) / cumulative(volume)
+
+    Typical price = (high + low + close) / 3.
+
+    Args:
+        high: High price series.
+        low: Low price series.
+        close: Closing price series.
+        volume: Volume series.
+
+    Returns:
+        A pandas Series of VWAP values.
+    """
+    typical_price = (high + low + close) / 3.0
+    cumulative_tp_vol = (typical_price * volume).cumsum()
+    cumulative_vol = volume.cumsum()
+
+    vwap = cumulative_tp_vol / cumulative_vol
+    return vwap
+
+
+def compute_bollinger_bands(
+    series: pd.Series,
+    period: int = 20,
+    num_std: float = 2.0,
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """Compute Bollinger Bands.
+
+    Middle band = SMA(period)
+    Upper band  = SMA + num_std * std
+    Lower band  = SMA - num_std * std
+
+    Args:
+        series: Price series (typically closing prices).
+        period: Moving average lookback period (default 20).
+        num_std: Number of standard deviations for band width (default 2.0).
+
+    Returns:
+        Tuple of (upper_band, middle_band, lower_band).
+    """
+    middle_band = series.rolling(window=period, min_periods=period).mean()
+    rolling_std = series.rolling(window=period, min_periods=period).std()
+
+    upper_band = middle_band + num_std * rolling_std
+    lower_band = middle_band - num_std * rolling_std
+
+    return upper_band, middle_band, lower_band
